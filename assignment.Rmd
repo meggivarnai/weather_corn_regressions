@@ -1,6 +1,6 @@
 ---
 title: "Weather and Corn Yield Regressions"
-author: "Nathan Mueller"
+author: "Meggi Varnai"
 date: "2/25/2022"
 output: html_document
 ---
@@ -8,8 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(R.matlab)
-library(rnassqs)
+library(R.matlab) #pulls in matlab file
+library(rnassqs) #allows us to download from NASS directly
 ```
 
 ## Weather Data Analysis
@@ -23,7 +23,7 @@ library(rnassqs)
 prism <- readMat("data/prismiowa.mat")
 
 # look at county #1
-t_1981_c1 <- prism$tmaxdaily.iowa[1,,1]
+t_1981_c1 <- prism$tmaxdaily.iowa[1,,1]#county 1, all days, first year
 t_1981_c1[366]
 plot(1:366, t_1981_c1, type = "l")
 
@@ -36,9 +36,10 @@ ggplot() +
 
 
 ```
+
 ```{r tidying up}
 
-# assign dimension names to tmax matrix
+# assign dimension names to tmax matrix. making the data easier to manipulate. dimnames creates list from dimensions (this data is 3D)
 dimnames(prism$tmaxdaily.iowa) <- list(prism$COUNTYFP, 1:366, prism$years)
 
 # converted 3d matrix into a data frame
@@ -68,9 +69,9 @@ ggplot(winnesummer, mapping = aes(x = year, y = meantmax)) +
   geom_point() +
   theme_bw() +
   labs(x = "year", y = "Tmax (°C)") +
-  geom_smooth(method = lm)
+  geom_smooth(method = lm) #trend line, linear model
 
-lm_summertmax <- lm(meantmax ~ year, winnesummer)
+lm_summertmax <- lm(meantmax ~ year, winnesummer) #LM(Responce(Y) ~Predictor (X))
 summary(lm_summertmax)
 
 ```
@@ -80,7 +81,7 @@ summary(lm_summertmax)
 ```{r winter temps}
 
 winnewinter <- tmaxdf %>%
-  filter(countyfp==191 & doy <= 59 | doy >= 335 & !is.na(tmax)) %>%
+  filter(countyfp==191 & (doy <= 59 | doy >= 335) & !is.na(tmax)) %>%
   group_by(year) %>%
   summarize(meantmax = mean(tmax))
 
@@ -115,10 +116,10 @@ ggplot(winnewinter) +
 
 ### Download NASS corn yield data
 
-```{r yield download}
+```{r yield download, message=FALSE}
 
 # set our API key with NASS
-nassqs_auth(key = "...")
+nassqs_auth(key = "90C60E94-62E7-3DCB-969E-9AD7E119703A")
 
 # parameters to query on 
 params <- list(commodity_desc = "CORN", util_practice_desc = "GRAIN", prodn_practice_desc = "ALL PRODUCTION PRACTICES", year__GE = 1981, state_alpha = "IA")
@@ -140,16 +141,65 @@ cornyields <- tibble(cornyields)
 
 ### Question 1a: Extract Winneshiek County corn yields, fit a linear time trend, make a plot. Is there a significant time trend?
 
+```{r}
+#extract county yeild
+winneyield<- cornyields %>%
+  filter(county_ansi==191)
+#linear trend
+lm_winneyield <- lm(yield~year, winneyield)
+summary(lm_winneyield)
+winneyield$fitted <- lm_winneyield$fitted.values
+#plot
+ggplot(winneyield)+
+  geom_point(mapping= aes(x=year,y=yield))+
+  geom_line(mapping= aes(x=year, y=fitted))+
+  labs(x='year', y='yield', title='Linear Model for corn yield')
+```
+
+A:Looking at our p-value (1.767 e-13), there is evidence of a significant time trend. The estimated slope is an increase of 2.457 yield per year, and our adjusted R-squared value shows us that abbout 75% of the data fit this model. 
+
+
 ### Question 1b: Fit a quadratic time trend (i.e., year + year^2) and make a plot. Is there evidence for slowing yield growth? 
+
+```{r}
+
+```
+
+A: square of explanitory variable. use if linear doesnt fit well. There is no evidence of a slowing yield growth. 
 
 ### Question 2 -- Time Series: Let's analyze the relationship between temperature and yields for the Winneshiek County time series. Use data on yield and summer avg Tmax. Is adding year or Tmax^2 to your model helpful? Make a plot and interpret the results.
 
+```{r}
+
+```
+
+
 ### Question 3 -- Cross-Section: Analyze the relationship between temperature and yield across all counties in 2018. Is there a relationship? Interpret the results.
+
+```{r}
+
+```
+
 
 ### Question 4 -- Panel: One way to leverage multiple time series is to group all data into what is called a "panel" regression. Convert the county ID code ("countyfp" or "county_ansi") into factor using as.factor, then include this variable in a regression using all counties' yield and summer temperature data. How does the significance of your temperature coefficients (Tmax, Tmax^2) change? Make a plot comparing actual and fitted yields and interpret the results of your model.
 
+```{r}
+
+```
+
+
 ### Question 5 -- Soybeans: Download NASS data on soybean yields and explore either a time series relationship for a given county, the cross-sectional relationship for a given year, or a panel across all counties and years.
 
+```{r}
+
+```
+
+
 ### Bonus: Find a package to make a county map of Iowa displaying some sort of information about yields or weather. Interpret your map.
+
+```{r}
+
+```
+
 
 ### Bonus #2: Challenge question - map trends in corn yields by county across Iowa. Interpret your map.
