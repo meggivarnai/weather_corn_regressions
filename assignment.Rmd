@@ -116,7 +116,7 @@ ggplot(winnewinter) +
 
 ### Download NASS corn yield data
 
-```{r yield download, message=FALSE}
+```{r yield download, message=FALSE, results='hide'}
 
 # set our API key with NASS
 nassqs_auth(key = "90C60E94-62E7-3DCB-969E-9AD7E119703A")
@@ -156,23 +156,43 @@ ggplot(winneyield)+
   labs(x='year', y='yield', title='Linear Model for corn yield')
 ```
 
-A:Looking at our p-value (1.767 e-13), there is evidence of a significant time trend. The estimated slope is an increase of 2.457 yield per year, and our adjusted R-squared value shows us that abbout 75% of the data fit this model. 
+A:Looking at our p-value (1.767 e-13), there is evidence of a significant time trend. The estimated slope is an increase of 2.457 yield per year, and our adjusted R-squared value shows us that about 75% of the data fit this model. 
 
 
 ### Question 1b: Fit a quadratic time trend (i.e., year + year^2) and make a plot. Is there evidence for slowing yield growth? 
 
 ```{r}
-
+winneyield$yearsq <-winneyield$year^2
+lm_winneyield_quad <- lm(yield~ year+ yearsq, winneyield)
+summary(lm_winneyield_quad)
+winneyield$quadfitted <-lm_winneyield_quad$fitted.values
+#plot
+ggplot(winneyield)+
+  geom_point(mapping= aes(x=year,y=yield))+
+  geom_line(mapping= aes(x=year, y=quadfitted))+
+  labs(x='year', y='yield', title='Quadratic Model for corn yield')
 ```
 
-A: square of explanitory variable. use if linear doesnt fit well. There is no evidence of a slowing yield growth. 
+A: The p-value is less than alpha indicating there is evidence of a relationship between years a yield growth. The Based off the graph, there is no evidence of a slowing yield growth. 
 
 ### Question 2 -- Time Series: Let's analyze the relationship between temperature and yields for the Winneshiek County time series. Use data on yield and summer avg Tmax. Is adding year or Tmax^2 to your model helpful? Make a plot and interpret the results.
 
 ```{r}
-
+#bringing summer temp into yield
+winnecorn<-inner_join(winneyield,winnesummer)
+#quatratic with temp
+winnecorn$tempsq <-winnecorn$meantmax^2
+lm_winnecorn_quad <- lm(yield~ meantmax+ tempsq, winnecorn)
+summary(lm_winnecorn_quad)
+winnecorn$quadfitted <-lm_winnecorn_quad$fitted.values
+#plot
+ggplot(winnecorn)+
+  geom_point(mapping= aes(x=meantmax,y=yield))+
+  geom_line(mapping= aes(x=tempsq, y=quadfitted))+
+  labs(x='Temperature', y='Yield')
 ```
 
+A:
 
 ### Question 3 -- Cross-Section: Analyze the relationship between temperature and yield across all counties in 2018. Is there a relationship? Interpret the results.
 
