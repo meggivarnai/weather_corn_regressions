@@ -197,6 +197,19 @@ A:
 ### Question 3 -- Cross-Section: Analyze the relationship between temperature and yield across all counties in 2018. Is there a relationship? Interpret the results.
 
 ```{r}
+#pulling out relevant data
+iowa_temp2018 <- tmaxdf %>%
+  filter(year==2018) %>%
+
+yields2018 <-cornyields %>%
+  filter(year == 2018)
+
+#combining data
+iowa_2018 <- inner_join(iowa_temp2018,yields2018)
+
+#lm fit
+iowa_temp_model <- lm(yield~tmax, iowa_2018)
+summary(iowa_temp_model)
 
 ```
 
