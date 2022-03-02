@@ -242,6 +242,20 @@ head(countysummer)
 ### Question 5 -- Soybeans: Download NASS data on soybean yields and explore either a time series relationship for a given county, the cross-sectional relationship for a given year, or a panel across all counties and years.
 
 ```{r}
+# parameters to query 
+params2 <- list(commodity_desc = "SOYBEANS", util_practice_desc = "GRAIN", prodn_practice_desc = "ALL PRODUCTION PRACTICES", year__GE = 1981, state_alpha = "IA")
+
+# downloading the data (using nathan's code)
+soybean_yields_all <- nassqs_yields(params2)
+
+soybean_yields_all$county_ansi <- as.numeric(cornyieldsall$county_ansi)
+soybean_yields_all$yield <- as.numeric(cornyieldsall$Value)
+
+# clean and filter dataset
+soybean_yields <- select(cornyieldsall, county_ansi, county_name, yield, year) %>%
+  filter(!is.na(county_ansi) & !is.na(yield))
+soybean_yields <- tibble(cornyields)
+
 
 ```
 
@@ -249,6 +263,7 @@ head(countysummer)
 ### Bonus: Find a package to make a county map of Iowa displaying some sort of information about yields or weather. Interpret your map.
 
 ```{r}
+
 
 ```
 
