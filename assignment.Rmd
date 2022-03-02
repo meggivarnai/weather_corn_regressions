@@ -16,7 +16,7 @@ library(rnassqs) #allows us to download from NASS directly
 
 ### Load the PRISM daily maximum temperatures
 
-```{r tmax data}
+```{r tmax data, warning=FALSE}
 
 # daily max temperature
 # dimensions: counties x days x years
@@ -55,7 +55,7 @@ tmaxdf <- tibble(tmaxdf)
 
 ### Summer temperature trends: Winneshiek County
 
-```{r temp trends}
+```{r temp trends, message=FALSE}
 
 tmaxdf$doy <- as.numeric(tmaxdf$doy)
 tmaxdf$year <- as.numeric(as.character(tmaxdf$year))
@@ -78,7 +78,7 @@ summary(lm_summertmax)
 
 ### Winter Temperatures - Winneshiek County
 
-```{r winter temps}
+```{r winter temps,message=FALSE}
 
 winnewinter <- tmaxdf %>%
   filter(countyfp==191 & (doy <= 59 | doy >= 335) & !is.na(tmax)) %>%
@@ -173,11 +173,11 @@ ggplot(winneyield)+
   labs(x='year', y='yield', title='Quadratic Model for corn yield')
 ```
 
-A: The p-value is less than alpha indicating there is evidence of a relationship between years a yield growth. The Based off the graph, there is no evidence of a slowing yield growth. 
+A: The p-value (2.311e-12) is less than alpha  (0.05), indicating there is evidence of a relationship between years an yield growth. Based off the graph and our quadratic model, there is a slight slope of 7.641e-03, there is no evidence of a slowing yield growth. 
 
 ### Question 2 -- Time Series: Let's analyze the relationship between temperature and yields for the Winneshiek County time series. Use data on yield and summer avg Tmax. Is adding year or Tmax^2 to your model helpful? Make a plot and interpret the results.
 
-```{r}
+```{r, message=FALSE}
 #bringing summer temp into yield
 winnecorn<-inner_join(winneyield,winnesummer)
 #quatratic with temp
@@ -188,7 +188,7 @@ winnecorn$quadfitted <-lm_winnecorn_quad$fitted.values
 #plot
 ggplot(winnecorn)+
   geom_point(mapping= aes(x=meantmax,y=yield))+
-  geom_line(mapping= aes(x=tempsq, y=quadfitted))+
+  geom_line(mapping= aes(x=meantmax, y=quadfitted))+
   labs(x='Temperature', y='Yield')
 ```
 
@@ -199,17 +199,24 @@ A:
 ```{r}
 #pulling out relevant data
 iowa_temp2018 <- tmaxdf %>%
-  filter(year==2018) %>%
+  filter(year==2018 & !is.na(tmax)) %>%
+  group_by(countyfp,year) %>%
+  summarise(meantmax = mean(tmax))
 
 yields2018 <-cornyields %>%
-  filter(year == 2018)
+  filter(year == 2018 & !is.na(yield))
 
 #combining data
 iowa_2018 <- inner_join(iowa_temp2018,yields2018)
+tibble(iowa_2018)
 
 #lm fit
-iowa_temp_model <- lm(yield~tmax, iowa_2018)
+iowa_temp_model <- lm(yield~meantmax, iowa_2018)
 summary(iowa_temp_model)
+
+#plot
+ggplot(iowa_2018,aes(x=meantmax, y=yield))+
+  geom_point()
 
 ```
 
